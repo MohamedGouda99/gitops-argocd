@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: dev
+
+resources:
+- ../../base
+
+replicas:
+- name: sample-app
+  count: 2
+
+images:
+- name: nginx
+  newTag: latest
+
+configMapGenerator:
+- name: app-config
+  literals:
+  - ENVIRONMENT=dev
+  - LOG_LEVEL=debug
+
+patchesStrategicMerge:
+- |-
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: sample-app
+  spec:
+    template:
+      spec:
+        containers:
+        - name: sample-app
+          env:
+          - name: ENVIRONMENT
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: ENVIRONMENT
+          - name: LOG_LEVEL
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: LOG_LEVEL
+
